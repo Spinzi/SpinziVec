@@ -1,0 +1,126 @@
+/*
+ * Vectors by Spinzi — Custom Dynamic Integer Array Class
+ * -------------------------------------------------
+ * Author: Spinzi
+ *
+ * Description:
+ * This class provides a simplified dynamic array for integers,
+ * supporting operations such as reading from input, appending elements,
+ * exporting subarrays, and copying data. Memory management is encapsulated
+ * within a dedicated struct (sArray) to improve safety and maintainability.
+ * 
+ * I choosed to create this class in order to improve my coding abilities and
+ * to better understand memory management inside C++.
+ *
+ * Key Features:
+ * - Manual dynamic memory management with RAII principles
+ * - Copy constructor and copy assignment disabled to prevent shallow copies
+ * - Flexible build and import functions (partially implemented)
+ * - Designed as a learning tool and foundation for more complex data structures
+ *
+ * Notes:
+ * - Length is explicitly tracked; arrays are not zero-terminated.
+ * - This implementation is a base for further extension, such as move semantics,
+ *   bounds checking, and exception safety.
+ */
+
+
+// to do: add a logger
+
+
+#include <iostream>
+
+struct sArray {
+	int* data = nullptr;
+	int length = 0;
+
+	sArray() = default;
+
+	void rebuild(int size){
+		length = size;
+		delete[] data;
+		data = new int[length];
+	}
+
+	sArray(int size) : length(size) {
+		if(size>0)
+			data = new int[length];
+	};
+
+	~sArray() {
+		delete[] data;
+	}
+
+	sArray(const sArray&) = delete;//still need to understand this part
+	sArray& operator=(const sArray& other) = delete;//also this one I need to understand
+};
+
+class vectorBySpinzi {
+public:
+	sArray vectorEl;
+
+	void read() {
+		int vector_length;
+		std::cin >> vector_length;
+		vectorEl.rebuild(vector_length);
+		for (int i = 0; i < vectorEl.length; i++) {
+			std::cin >> vectorEl.data[i];
+		}
+	}
+
+	void print() {
+		for (int i = 0; i < vectorEl.length; i++) {
+			std::cout << vectorEl.data[i] << ' ';
+		}
+	}
+
+	void copy(const sArray& from, sArray& to) {
+		if (to.length < from.length) {
+		to.rebuild(from.length);
+		}
+		for (int i = 0; i < from.length; i++) {
+			to.data[i] = from.data[i];
+		}
+	}
+
+	void append(int val) {
+		sArray t;
+		copy(vectorEl, t);
+		vectorEl.rebuild(vectorEl.length + 1);
+		copy(t, vectorEl);
+		vectorEl.data[vectorEl.length - 1] = val;
+	}
+
+	void pop(int pos = -1, int sz = 1) {
+		if (pos > vectorEl.length - 1 || pos < 0)
+			pos = vectorEl.length - 1;
+		if (pos + sz > vectorEl.length)
+		{
+			throw std::out_of_range("pop range out of bounds");
+			return;
+		}
+		for (int i = pos; i < vectorEl.length - sz; i++) {
+			vectorEl.data[i] = vectorEl.data[i + sz];
+		}
+		vectorEl.length = vectorEl.length - sz;
+		sArray t;
+		copy(vectorEl, t);
+		vectorEl.rebuild(vectorEl.length);
+		copy(t, vectorEl);
+	}
+
+};
+
+int main() {
+	vectorBySpinzi el;
+	el.read();
+	vectorBySpinzi copy_;
+	copy_.copy(el.vectorEl, copy_.vectorEl);
+
+	copy_.append(12);
+
+	copy_.pop();
+	copy_.pop();
+
+	copy_.print();
+}

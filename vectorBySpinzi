@@ -104,12 +104,14 @@ public:
 		for (int i = 0; i < vectorEl.length; i++) {
 			std::cin >> vectorEl.data[i];
 		}
+		sLog("Read vector.");
 	}
 
 	void print() {
 		for (int i = 0; i < vectorEl.length; i++) {
 			std::cout << vectorEl.data[i] << ' ';
 		}
+		sLog("Printed vector");
 	}
 
 	void copy(const sArray& from, sArray& to) {
@@ -119,6 +121,7 @@ public:
 		for (int i = 0; i < from.length; i++) {
 			to.data[i] = from.data[i];
 		}
+		sLog("Copied elements of two arrays.", from.vName, to.vName);
 	}
 
 	void append(int val) {
@@ -127,6 +130,7 @@ public:
 		vectorEl.rebuild(vectorEl.length + 1);
 		copy(t, vectorEl);
 		vectorEl.data[vectorEl.length - 1] = val;
+		sLog("Appended element to vector. Appended element: ", );
 	}
 
 	void pop_at(int pos = -1, int sz = 1) {
@@ -147,15 +151,33 @@ public:
 		copy(t, vectorEl);
 	}
 
-	void sLog(const char* msg) {
-		if()
+	void sLog(const char* msg, char* optOne = nullptr, char* optTwo = nullptr) {
+		if (!logging)
+			return;
 		std::ofstream log("log.txt", std::ios::app);
-		if (!log) return;
 
 		std::time_t timestamp = time(0);
 		tm* now = std::localtime(&timestamp);
 
-		log << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']' << " Element: " << vName << "; " << msg << '\n';
+		log << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']' << " Element: " << vectorEl.vName << "; " << msg << optOne << ' ' << optTwo << '\n';
+	}
+
+	char* to_charS(int val) {
+		int vLength
+	}
+
+	int numbLength(int n) {
+		int l = 0;
+		while (n)
+		{
+			n / 10;
+			l++;
+		}
+		return l;
+	}
+	
+	char numbToChar(int val) {
+		return val + 60;
 	}
 
 };

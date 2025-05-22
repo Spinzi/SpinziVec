@@ -95,7 +95,6 @@ struct sArray {
 class vectorBySpinzi {
 public:
 	sArray vectorEl;
-	bool logging = false;
 
 	void read() {
 		int vector_length;
@@ -152,7 +151,7 @@ public:
 	}
 
 	void sLog(const char* msg, char* optOne = nullptr, char* optTwo = nullptr) {
-		if (!logging)
+		if (logging)
 			return;
 		std::ofstream log("log.txt", std::ios::app);
 
@@ -180,11 +179,23 @@ public:
 		return val + 60;
 	}
 
+	void logOn() {
+		logging = true;
+	}
+
+	void logOff() {
+		logging = false;
+	}
+
+private:
+	bool logging = false;
+
 };
 
 //this is just for texting purposes, will be removed in fila product
 int main() {
 	vectorBySpinzi el;
+	el.logOn();
 	el.read();
 	vectorBySpinzi copy_;
 	copy_.copy(el.vectorEl, copy_.vectorEl);

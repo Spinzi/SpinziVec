@@ -1,4 +1,5 @@
 /*
+* ALPHA, BUGS MAY OCCUR
  * Vectors by Spinzi — Custom Dynamic Integer Array Class
  * -------------------------------------------------
  * Author: Spinzi
@@ -29,12 +30,47 @@
 
 
 #include <iostream>
+#include <fstream>
+#include <ctime>
+#include <iomanip>
+
+#pragma warning(disable : 4996)
+
+
 
 struct sArray {
 	int* data = nullptr;
 	int length = 0;
+	char* vName = nullptr;
 
-	sArray() = default;
+	sArray(char* name = nullptr) {
+		if (name) {
+			size_t len = strlen(name) + 1; // +1 for null terminator
+			vName = new char[len];
+			strcpy(vName, name);
+		}
+		else {
+			const char* defaultName = "Unnamed";
+			size_t len = strlen(defaultName) + 1;
+			vName = new char[len];
+			strcpy(vName, defaultName);
+		}
+	};
+
+
+	void rename(char* name = nullptr) {
+		if (name) {
+			size_t len = strlen(name) + 1; // +1 for null terminator
+			vName = new char[len];
+			strcpy(vName, name);
+		}
+		else {
+			const char* defaultName = "Unnamed";
+			size_t len = strlen(defaultName) + 1;
+			vName = new char[len];
+			strcpy(vName, defaultName);
+		}
+	}
 
 	void rebuild(int size){
 		length = size;
@@ -49,6 +85,7 @@ struct sArray {
 
 	~sArray() {
 		delete[] data;
+		delete[] vName;
 	}
 
 	sArray(const sArray&) = delete;//still need to understand this part
@@ -58,6 +95,7 @@ struct sArray {
 class vectorBySpinzi {
 public:
 	sArray vectorEl;
+	bool logging = false;
 
 	void read() {
 		int vector_length;
@@ -91,7 +129,7 @@ public:
 		vectorEl.data[vectorEl.length - 1] = val;
 	}
 
-	void pop(int pos = -1, int sz = 1) {
+	void pop_at(int pos = -1, int sz = 1) {
 		if (pos > vectorEl.length - 1 || pos < 0)
 			pos = vectorEl.length - 1;
 		if (pos + sz > vectorEl.length)
@@ -109,8 +147,20 @@ public:
 		copy(t, vectorEl);
 	}
 
+	void sLog(const char* msg) {
+		if()
+		std::ofstream log("log.txt", std::ios::app);
+		if (!log) return;
+
+		std::time_t timestamp = time(0);
+		tm* now = std::localtime(&timestamp);
+
+		log << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']' << " Element: " << vName << "; " << msg << '\n';
+	}
+
 };
 
+//this is just for texting purposes, will be removed in fila product
 int main() {
 	vectorBySpinzi el;
 	el.read();
@@ -119,8 +169,8 @@ int main() {
 
 	copy_.append(12);
 
-	copy_.pop();
-	copy_.pop();
+	copy_.pop_at();
+	copy_.pop_at();
 
 	copy_.print();
 }

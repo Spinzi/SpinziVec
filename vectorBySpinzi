@@ -9,7 +9,7 @@
  * supporting operations such as reading from input, appending elements,
  * exporting subarrays, and copying data. Memory management is encapsulated
  * within a dedicated struct (sArray) to improve safety and maintainability.
- * 
+ *
  * I choosed to create this class in order to improve my coding abilities and
  * to better understand memory management inside C++.
  *
@@ -26,7 +26,7 @@
  */
 
 
-// to do: add a logger and progress bar
+ // to do: add a logger and progress bar
 
 
 #include <iostream>
@@ -59,6 +59,7 @@ struct sArray {
 
 
 	void rename(char* name = nullptr) {
+		delete[] vName;
 		if (name) {
 			size_t len = strlen(name) + 1; // +1 for null terminator
 			vName = new char[len];
@@ -72,14 +73,14 @@ struct sArray {
 		}
 	}
 
-	void rebuild(int size){
+	void rebuild(int size) {
 		length = size;
 		delete[] data;
 		data = new int[length];
 	}
 
 	sArray(int size) : length(size) {
-		if(size>0)
+		if (size > 0)
 			data = new int[length];
 	};
 
@@ -113,9 +114,17 @@ public:
 		sLog("Printed vector");
 	}
 
+	void rename(const char* name) {
+		unsigned int ln = strlen(name) + 1;
+		char* nm = new char[ln];
+		strcpy(nm, name);
+		vectorEl.rename(nm);
+		delete[] nm;
+	}
+
 	void copy(const sArray& from, sArray& to) {
 		if (to.length < from.length) {
-		to.rebuild(from.length);
+			to.rebuild(from.length);
 		}
 		for (int i = 0; i < from.length; i++) {
 			to.data[i] = from.data[i];
@@ -129,7 +138,7 @@ public:
 		vectorEl.rebuild(vectorEl.length + 1);
 		copy(t, vectorEl);
 		vectorEl.data[vectorEl.length - 1] = val;
-		sLog("Appended element to vector. Appended element: ", );
+		//sLog("Appended element to vector. Appended element: ", );
 	}
 
 	void pop_at(int pos = -1, int sz = 1) {
@@ -150,22 +159,38 @@ public:
 		copy(t, vectorEl);
 	}
 
-	void sLog(const char* msg, char* optOne = nullptr, char* optTwo = nullptr) {
-		if (logging)
+	void sLog(const char* msg, const char* optOne = "", const char* optTwo = "") {
+		if (!logging)
 			return;
-		std::ofstream log("log.txt", std::ios::app);
 
+		std::ofstream log("log.txt", std::ios::app);
 		std::time_t timestamp = time(0);
 		tm* now = std::localtime(&timestamp);
 
-		log << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']' << " Element: " << vectorEl.vName << "; " << msg << optOne << ' ' << optTwo << '\n';
+		log << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']'
+			<< " Element: " << (vectorEl.vName ? vectorEl.vName : "Unnamed")
+			<< "; " << msg << ' ' << (optOne ? optOne : "") << ' ' << (optTwo ? optTwo : "") << '\n';
 	}
 
 	char* to_charS(int val) {
-		int vLength
+		bool negative = false;
+		if (val < 0) negative = true;
+		int vLength = numbLength(val);
+		char* str = new char[vLength+1];
+		str[vLength + 1] = '/0';
+		for (int i = vLength-1; i >= 0 ; i--) {
+			str[i] = numbToChar(val % 10);
+			val /= 10;
+		}
+		return str;
+
+		bool negatie = 0;
+		int starting_position = 0;
+
 	}
 
 	int numbLength(int n) {
+		if (n == 0) return 1;
 		int l = 0;
 		while (n)
 		{
@@ -174,9 +199,9 @@ public:
 		}
 		return l;
 	}
-	
+
 	char numbToChar(int val) {
-		return val + 60;
+		return val + 48;
 	}
 
 	void logOn() {
@@ -196,14 +221,9 @@ private:
 int main() {
 	vectorBySpinzi el;
 	el.logOn();
+	el.rename("Ghita");
 	el.read();
-	vectorBySpinzi copy_;
-	copy_.copy(el.vectorEl, copy_.vectorEl);
-
-	copy_.append(12);
-
-	copy_.pop_at();
-	copy_.pop_at();
-
-	copy_.print();
+	el.append(41);
+	el.pop_at(1, 1);
+	el.print();
 }

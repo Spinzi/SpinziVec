@@ -26,7 +26,7 @@
  */
 
 
- // to do: add a logger and progress bar
+ // to do: add a logger and progress bar and a clear all elemets with, etc etc
 
 
 #include <iostream>
@@ -272,26 +272,71 @@ public:
 	}
 
 	void test_class() {
-		std::cout << "STARTING TESTING OF CLASS \nVERYFING INPUT, ENTER READING PHASE:";
+		std::cout << "=====================================\n";
+		std::cout << "STARTING TESTING OF CLASS\n";
+		std::cout << "=====================================\n\n";
+
+		std::cout << "[PHASE 1] INPUT & READING:\n";
+		std::cout << "Please enter the values to read into the vector:\n";
 		read();
-		std::cout << "\nFINISHED READING THE VECTOR\nTHE VECTOR IS\n";
+
+		std::cout << "\n[INFO] Finished reading. The vector is:\n";
 		print();
-		std::cout << "\nSORTING THE VECTOR:\nSMALL TO BIG:\n";
+
+		std::cout << "\n[PHASE 2] SORTING:\n";
+
+		std::cout << "Sorting vector in ASCENDING order:\n";
 		sort(0, -1, false);
 		print();
-		std::cout << "\nBIG TO SMALL:\n";
+
+		std::cout << "\nSorting vector in DESCENDING order:\n";
 		sort(0, -1, true);
 		print();
-		std::cout << "\nFINISHED SORTHING PHASE\nAPPENDING VALUES: 65, 24, 62, 13, 52, 63.\n";
+
+		std::cout << "\n[PHASE 3] APPENDING VALUES:\n";
+		std::cout << "Appending values: 65, 24, 62, 13, 52, 63...\n";
+
 		append(65);
 		append(24);
 		append(62);
 		append(13);
 		append(52);
 		append(63);
-		std::cout << "PRINTING\n";
+
+		std::cout << "Updated vector with positions:\n";
+		print_with_pos();
+
+		std::cout << "\n[PHASE 4] REMOVING ELEMENTS AT SPECIFIC POSITIONS:\n";
+		std::cout << "Enter 3 positions to remove values from (one per line):\n";
+
+		for (int i = 0; i < 3; i++) {
+			int pos;
+			std::cin >> pos;
+			std::cout << "\nAttempting to remove element at position " << pos << "...\n";
+
+			try {
+				pop_at(pos);
+				std::cout << "[SUCCESS] Removed. Current vector:\n";
+				print_with_pos();
+			}
+			catch (std::out_of_range& e) {
+				std::cout << "[ERROR] Exception caught: " << e.what() << '\n';
+			}
+		}
+
+		std::cout << "\n[INFO] Final vector after deletions:\n";
+		print_with_pos();
+
+		std::cout << "\n[PHASE 5] PARTIAL SORT:\n";
+		std::cout << "Sorting vector from 2nd to last element (ASCENDING)...\n";
+		sort(1, -1, false);
+
+		std::cout << "Vector after partial sort:\n";
 		print();
-		std::cout << "ENTER 3 POSITIONS TO REMOVE VALUES FROM:";
+
+		std::cout << "\n=====================================\n";
+		std::cout << "TEST COMPLETE.\n";
+		std::cout << "=====================================\n";
 	}
 };
 
@@ -299,9 +344,6 @@ public:
 int main() {
 	vectorBySpinzi el;
 	el.logOn();
-	el.rename("Ghita");
-	el.read();
-	el.append(41);
-	el.pop_at(1, 1);
-	el.print();
+	el.rename("Custom");
+	el.test_class();
 }

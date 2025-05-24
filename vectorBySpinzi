@@ -33,70 +33,63 @@
 #include <fstream>
 #include <ctime>
 #include <iomanip>
+#include <functional>
 
 #pragma warning(disable : 4996)
 
 
 
-struct sArray {
-	int* data = nullptr;
-	int length = 0;
-	char* vName = nullptr;
-
-	sArray(char* name = nullptr) {
-		if (name) {
-			size_t len = strlen(name) + 1; // +1 for null terminator
-			vName = new char[len];
-			strcpy(vName, name);
-		}
-		else {
-			const char* defaultName = "Unnamed";
-			size_t len = strlen(defaultName) + 1;
-			vName = new char[len];
-			strcpy(vName, defaultName);
-		}
-	};
-
-
-	void rename(char* name = nullptr) {
-		delete[] vName;
-		if (name) {
-			size_t len = strlen(name) + 1; // +1 for null terminator
-			vName = new char[len];
-			strcpy(vName, name);
-		}
-		else {
-			const char* defaultName = "Unnamed";
-			size_t len = strlen(defaultName) + 1;
-			vName = new char[len];
-			strcpy(vName, defaultName);
-		}
-	}
-
-	void rebuild(int size) {
-		length = size;
-		delete[] data;
-		data = new int[length];
-	}
-
-	sArray(int size) : length(size) {
-		if (size > 0)
-			data = new int[length];
-	};
-
-	~sArray() {
-		delete[] data;
-		delete[] vName;
-	}
-
-	sArray(const sArray&) = delete;//still need to understand this part
-	sArray& operator=(const sArray& other) = delete;//also this one I need to understand
-};
-
 class vectorBySpinzi {
-public:
-	sArray vectorEl;
 
+private:
+	struct sArray {
+		//defining the name, length and data
+		int* data = nullptr;
+		int length = 0;
+		char* vName = nullptr;
+
+		//renaming the array from a pointer 
+		void rename(const char* name = nullptr) {
+			delete[] vName;
+			if (name) {
+				size_t len = strlen(name) + 1; // +1 for null terminator
+				vName = new char[len];
+				strcpy(vName, name);
+			}
+			else {
+				const char* defaultName = "Unnamed";
+				size_t len = strlen(defaultName) + 1;
+				vName = new char[len];
+				strcpy(vName, defaultName);
+			}
+		}
+
+		//rebuilding the array, it delets the past info and builds it with the desired length
+		void rebuild(int size) {
+			length = size;
+			delete[] data;
+			data = new int[length];
+		}
+
+		//initialization of the default vector
+		sArray(int size = 0, const char* name = nullptr) : length(size) {
+			if (size > 0)
+				data = new int[length];
+			rename(name);
+		}
+
+		~sArray() {
+			delete[] data;
+			delete[] vName;
+		}
+
+		sArray(const sArray&) = delete;//still need to understand this part
+		sArray& operator=(const sArray& other) = delete;//also this one I need to understand
+	};
+	sArray vectorEl;
+	bool logging = false;
+
+public:
 	void read() {
 		int vector_length;
 		std::cin >> vector_length;
@@ -114,12 +107,16 @@ public:
 		sLog("Printed vector");
 	}
 
+	void print_with_pos() {
+		std::cout << '\n';
+		for (int i = 0; i < vectorEl.length; i++) {
+			std::cout << i << ':' << vectorEl.data[i] << '\n';
+		}
+		sLog("Printed vector");
+	}
+
 	void rename(const char* name) {
-		unsigned int ln = strlen(name) + 1;
-		char* nm = new char[ln];
-		strcpy(nm, name);
-		vectorEl.rename(nm);
-		delete[] nm;
+		vectorEl.rename(name);
 	}
 
 	void copy(const sArray& from, sArray& to) {
@@ -133,12 +130,16 @@ public:
 	}
 
 	void append(int val) {
+		//temporarly create a t element, we copy them, bla bla and then log
 		sArray t;
+		t.rename("Append temporar vector");
 		copy(vectorEl, t);
 		vectorEl.rebuild(vectorEl.length + 1);
 		copy(t, vectorEl);
 		vectorEl.data[vectorEl.length - 1] = val;
-		//sLog("Appended element to vector. Appended element: ", );
+		char* temp = to_charS(val);//tis is the function which returns a pointer to the correctly transformed int into a char array, took too much to build
+		sLog("Appended element to vector. Appended element: ", temp);
+		delete[] temp;
 	}
 
 	void pop_at(int pos = -1, int sz = 1) {
@@ -173,37 +174,95 @@ public:
 	}
 
 	char* to_charS(int val) {
-		bool negative = false;
-		if (val < 0) negative = true;
-		int vLength = numbLength(val);
-		char* str = new char[vLength+1];
-		str[vLength + 1] = '/0';
-		for (int i = vLength-1; i >= 0 ; i--) {
-			str[i] = numbToChar(val % 10);
-			val /= 10;
-		}
-		return str;
-
-		bool negatie = 0;
+		//this function is a pain
+		int leng = numbLength(val)+1;//+1 for null terminator
 		int starting_position = 0;
+		bool neg = 0;
 
+		size_t absVal;
+
+		if (val < 0) {
+			leng++;//incerement the size by one for the beggining -
+			starting_position = 1; //due to -
+			neg = true;
+			absVal = static_cast<size_t>(-(val + 1)) + 1;//special method, INT_MIN = -2147483648 INT_MAX = 2147483647 | If we would try to convert it would throw an error so we incerment it by one, it fits, we convert, and the it becomes unsigned int and it fits
+		}
+		else {
+			absVal = static_cast<size_t>(val);
+		}
+		char* f = new char[leng];//build the pointer with the memory needed
+		if (neg)
+			f[0] = '-';
+		f[leng - 1] = '\0';
+		for (int i = leng - 2; i >= starting_position; i--) {//converts numbers to chars
+			f[i] = numbToChar(absVal % 10);
+			absVal /= 10;
+		}
+		return f;//returns the pointer, use with care
 	}
 
-	int numbLength(int n) {
+	int numbLength(int n) {//returns the length of a numb
 		if (n == 0) return 1;
 		int l = 0;
 		while (n)
 		{
-			n / 10;
+			n /= 10;
 			l++;
 		}
 		return l;
 	}
 
-	char numbToChar(int val) {
+	void sort(int from = 0, int to = -1, bool direction = 0) {
+
+		if (to == -1) {
+			to = vectorEl.length - 1;
+		}
+
+		if (from < 0 || to > vectorEl.length) {
+			sLog("Error in attempting to call vector, values are out of bonds.");
+			return;
+		}
+
+		//0 for default, small to big, 1 for opposite
+		auto swap = [](int& a, int& b) {
+			int t = a;
+			a = b;
+			b = t;
+		};
+
+		//this partition separates a section of elements, what is higher that the pivot on the right and what is smaller on the left
+		auto partition = [&](int bottom, int top, int* v) {
+			int piv = v[top];
+			int i = bottom - 1;
+			for (int j = bottom; j < top; j++) {
+				if (direction ? (v[j] > piv) : (v[j] < piv)) {
+					swap(v[++i], v[j]);
+				}
+			}
+			swap(v[++i], v[top]);
+			return i;
+		};
+
+		//creating a function using std::function, allows us recursive calls inside lambada fn
+		std::function<void(int, int)> quickSort;
+
+		quickSort = [&](int bottom, int top) {
+			if (bottom < top) {
+				int piv = partition(bottom, top, vectorEl.data);
+
+				quickSort(bottom, piv-1);
+				quickSort(piv+1, top);
+			}
+		};
+
+		quickSort(from, to);
+	}
+
+	char numbToChar(int val) {//converts numb to char
 		return val + 48;
 	}
 
+	//log on or off, not much to say
 	void logOn() {
 		logging = true;
 	}
@@ -212,9 +271,28 @@ public:
 		logging = false;
 	}
 
-private:
-	bool logging = false;
-
+	void test_class() {
+		std::cout << "STARTING TESTING OF CLASS \nVERYFING INPUT, ENTER READING PHASE:";
+		read();
+		std::cout << "\nFINISHED READING THE VECTOR\nTHE VECTOR IS\n";
+		print();
+		std::cout << "\nSORTING THE VECTOR:\nSMALL TO BIG:\n";
+		sort(0, -1, false);
+		print();
+		std::cout << "\nBIG TO SMALL:\n";
+		sort(0, -1, true);
+		print();
+		std::cout << "\nFINISHED SORTHING PHASE\nAPPENDING VALUES: 65, 24, 62, 13, 52, 63.\n";
+		append(65);
+		append(24);
+		append(62);
+		append(13);
+		append(52);
+		append(63);
+		std::cout << "PRINTING\n";
+		print();
+		std::cout << "ENTER 3 POSITIONS TO REMOVE VALUES FROM:";
+	}
 };
 
 //this is just for texting purposes, will be removed in fila product

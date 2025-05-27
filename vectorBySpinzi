@@ -293,10 +293,6 @@ public:
 		logging = false;
 	}
 
-	void getMin() {
-		for(int i=0; i<vectorEl.length; i++)
-	}
-
 	void test_class() {
 		std::cout << "=====================================\n";
 		std::cout << "STARTING TESTING OF CLASS\n";

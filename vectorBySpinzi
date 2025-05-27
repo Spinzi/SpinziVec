@@ -48,7 +48,7 @@ private:
 		int length = 0;
 		char* vName = nullptr;
 
-		int getMin() {//update these function because they are not good enough
+		int getMin_val() {
 			if (length < 1) {
 				return -1;
 			}
@@ -57,17 +57,19 @@ private:
 				if (data[i] < _min)
 					_min = data[i];
 			}
+			return _min;
 		}
 
-		int getMax() {//update these function because they are not good enough
+		int getMax_val() {
 			if (length < 1) {
 				return -1;
 			}
 			int _max = data[0];
 			for (int i = 1; i < length; i++) {
-				if (data[i] < _max)
+				if (data[i] > _max)
 					_max = data[i];
 			}
+			return _max;
 		}
 
 		//renaming the array from a pointer 
@@ -195,6 +197,14 @@ public:
 			<< "; " << msg << ' ' << (optOne ? optOne : "") << ' ' << (optTwo ? optTwo : "") << '\n';
 	}
 
+	void getPositionOf(int n, vectorBySpinzi& out) {
+		for (int i = 0; i < vectorEl.length; i++) {
+			if (vectorEl.data[i] == n) {
+				out.append(i);
+			}
+		}
+	}
+
 	char* to_charS(int val) {
 		//this function is a pain
 		int leng = numbLength(val) + 1;//+1 for null terminator
@@ -293,6 +303,14 @@ public:
 		logging = false;
 	}
 
+	int getMin() {
+		return vectorEl.getMin_val();
+	}
+
+	int getMax() {
+		return vectorEl.getMax_val();
+	}
+
 	void test_class() {
 		std::cout << "=====================================\n";
 		std::cout << "STARTING TESTING OF CLASS\n";
@@ -355,6 +373,31 @@ public:
 
 		std::cout << "Vector after partial sort:\n";
 		print();
+
+		std::cout << "\n[PHASE 6] MIN, MAX, AND POSITION TESTING:\n";
+
+		// Print current vector
+		std::cout << "Current vector:\n";
+		print_with_pos();
+
+		// Get and print min and max
+		int minVal = getMin();
+		int maxVal = getMax();
+
+		std::cout << "\nMinimum value in vector: " << minVal << '\n';
+		std::cout << "Maximum value in vector: " << maxVal << '\n';
+
+		// Ask for a value to find positions of
+		std::cout << "\nEnter a value to find all positions of:\n";
+		int targetVal;
+		std::cin >> targetVal;
+
+		vectorBySpinzi positions;
+		positions.rename("Positions");
+		getPositionOf(targetVal, positions);
+
+		std::cout << "Positions of value " << targetVal << " in vector:\n";
+		positions.print();
 
 		std::cout << "\n=====================================\n";
 		std::cout << "TEST COMPLETE.\n";

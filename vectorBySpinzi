@@ -48,6 +48,28 @@ private:
 		int length = 0;
 		char* vName = nullptr;
 
+		int getMin() {
+			if (length < 1) {
+				return -1;
+			}
+			int _min = data[0];
+			for (int i = 1; i < length; i++) {
+				if (data[i] < _min)
+					_min = data[i];
+			}
+		}
+
+		int getMax() {
+			if (length < 1) {
+				return -1;
+			}
+			int _max = data[0];
+			for (int i = 1; i < length; i++) {
+				if (data[i] < _max)
+					_max = data[i];
+			}
+		}
+
 		//renaming the array from a pointer 
 		void rename(const char* name = nullptr) {
 			delete[] vName;
@@ -175,7 +197,7 @@ public:
 
 	char* to_charS(int val) {
 		//this function is a pain
-		int leng = numbLength(val)+1;//+1 for null terminator
+		int leng = numbLength(val) + 1;//+1 for null terminator
 		int starting_position = 0;
 		bool neg = 0;
 
@@ -228,7 +250,7 @@ public:
 			int t = a;
 			a = b;
 			b = t;
-		};
+			};
 
 		//this partition separates a section of elements, what is higher that the pivot on the right and what is smaller on the left
 		auto partition = [&](int bottom, int top, int* v) {
@@ -241,7 +263,7 @@ public:
 			}
 			swap(v[++i], v[top]);
 			return i;
-		};
+			};
 
 		//creating a function using std::function, allows us recursive calls inside lambada fn
 		std::function<void(int, int)> quickSort;
@@ -250,10 +272,10 @@ public:
 			if (bottom < top) {
 				int piv = partition(bottom, top, vectorEl.data);
 
-				quickSort(bottom, piv-1);
-				quickSort(piv+1, top);
+				quickSort(bottom, piv - 1);
+				quickSort(piv + 1, top);
 			}
-		};
+			};
 
 		quickSort(from, to);
 	}
@@ -269,6 +291,10 @@ public:
 
 	void logOff() {
 		logging = false;
+	}
+
+	void getMin() {
+		for(int i=0; i<vectorEl.length; i++)
 	}
 
 	void test_class() {

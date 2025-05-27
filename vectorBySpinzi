@@ -48,7 +48,7 @@ private:
 		int length = 0;
 		char* vName = nullptr;
 
-		int getMin() {
+		int getMin() {//update these function because they are not good enough
 			if (length < 1) {
 				return -1;
 			}
@@ -59,7 +59,7 @@ private:
 			}
 		}
 
-		int getMax() {
+		int getMax() {//update these function because they are not good enough
 			if (length < 1) {
 				return -1;
 			}

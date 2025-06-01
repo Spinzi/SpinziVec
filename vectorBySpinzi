@@ -1,414 +1,301 @@
-/*
-* ALPHA, BUGS MAY OCCUR
- * Vectors by Spinzi — Custom Dynamic Integer Array Class
- * -------------------------------------------------
- * Author: Spinzi
- *
- * Description:
- * This class provides a simplified dynamic array for integers,
- * supporting operations such as reading from input, appending elements,
- * exporting subarrays, and copying data. Memory management is encapsulated
- * within a dedicated struct (sArray) to improve safety and maintainability.
- *
- * I choosed to create this class in order to improve my coding abilities and
- * to better understand memory management inside C++.
- *
- * Key Features:
- * - Manual dynamic memory management with RAII principles
- * - Copy constructor and copy assignment disabled to prevent shallow copies
- * - Flexible build and import functions (partially implemented)
- * - Designed as a learning tool and foundation for more complex data structures
- *
- * Notes:
- * - Length is explicitly tracked; arrays are not zero-terminated.
- * - This implementation is a base for further extension, such as move semantics,
- *   bounds checking, and exception safety.
- */
-
-
- // to do: add a logger and progress bar and a clear all elemets with, etc etc
-
-
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <ctime>
 #include <iomanip>
-#include <functional>
 
 #pragma warning(disable : 4996)
 
-
-
-class vectorBySpinzi {
-
+class OHManagerVector {
 private:
-	struct sArray {
-		//defining the name, length and data
-		int* data = nullptr;
-		int length = 0;
-		char* vName = nullptr;
+	struct OHcustomArray {
+		int* data;
+		char* name;
+		int length;
 
-		int getMin_val() {
-			if (length < 1) {
-				return -1;
-			}
-			int _min = data[0];
-			for (int i = 1; i < length; i++) {
-				if (data[i] < _min)
-					_min = data[i];
-			}
-			return _min;
+		void import(int* vectorData, int _length) {
+			rebuild(_length);
+			for (int i = 0; i < _length; i++)
+				data[i] = vectorData[i];
 		}
 
-		int getMax_val() {
-			if (length < 1) {
-				return -1;
-			}
-			int _max = data[0];
-			for (int i = 1; i < length; i++) {
-				if (data[i] > _max)
-					_max = data[i];
-			}
-			return _max;
+		void rename(const char* _name = "Unnamed") {
+			if (name)
+				delete[] name;
+			name = new char[strlen(_name) + 1];
+			strcpy(name, _name);
 		}
-
-		//renaming the array from a pointer 
-		void rename(const char* name = nullptr) {
-			delete[] vName;
-			if (name) {
-				size_t len = strlen(name) + 1; // +1 for null terminator
-				vName = new char[len];
-				strcpy(vName, name);
-			}
-			else {
-				const char* defaultName = "Unnamed";
-				size_t len = strlen(defaultName) + 1;
-				vName = new char[len];
-				strcpy(vName, defaultName);
-			}
-		}
-
-		//rebuilding the array, it delets the past info and builds it with the desired length
-		void rebuild(int size) {
-			length = size;
+		 
+		void rebuild(int _length = 0) {
+			int* newData = new int[_length];
+			for (int i = 0; i < _length && i < length; i++)
+				newData[i] = data[i];
+			length = _length;
 			delete[] data;
+			data = newData;
+		}
+
+		void clear() {
+			rename("Cleared unnamed");
+			rebuild();
+		}
+
+		OHcustomArray(const char* _name = "Unnamed", int* _vector = nullptr, int _length = 0):length(_length) {
+			name = new char[strlen(_name) + 1];
+			strcpy(name, _name);
 			data = new int[length];
+			if (_vector)
+				for (int i = 0; i < length; i++)
+					data[i] = _vector[i];
 		}
 
-		//initialization of the default vector
-		sArray(int size = 0, const char* name = nullptr) : length(size) {
-			if (size > 0)
-				data = new int[length];
-			rename(name);
-		}
-
-		~sArray() {
+		~OHcustomArray() {
 			delete[] data;
-			delete[] vName;
+			delete[] name;
 		}
 
-		sArray(const sArray&) = delete;//still need to understand this part
-		sArray& operator=(const sArray& other) = delete;//also this one I need to understand
+		OHcustomArray(const OHcustomArray&) = delete;
+		OHcustomArray& operator=(const OHcustomArray&) = delete;
 	};
-	sArray vectorEl;
-	bool logging = false;
+	void OHvectorCopy(OHcustomArray destination, OHcustomArray source) {
+		
+	}
+
+	void swap(int& a, int& b) {
+		int t = a;
+		a = b;
+		b = t;
+		};
+
+	int split(int from, int to, int* v, bool ascending) {
+		int index = from - 1;
+
+		for (int i = from; i < to; i++) {
+			if (ascending ? (v[i] < v[to]) : (v[i] > v[to])) {
+				swap(v[++index], v[i]);
+			}
+		}
+
+		swap(v[++index], v[to]);
+		return index;
+		};
+
+
+	void quickSort(int from, int to, int* v, bool ascending) {
+		if (from < to) {
+			int piv = split(from, to, v, ascending);
+
+			quickSort(from, piv - 1, v, ascending);
+			quickSort(piv + 1, to, v, ascending);
+		}
+		};
+
+	OHcustomArray OHvector;
+	
+	bool logState = false;
 
 public:
+
+	OHManagerVector(bool _logState = 0):logState(_logState) {
+		OHlog("___\n[OHManagedVector] Instance created. Initialization is optional.\n",
+			"Note: Use responsibly. Direct source code modification is discouraged.\n___");
+	}
+
+
+	void init(const char* name, int* vectorData = nullptr, int length = 0) {
+		OHvector.rename(name);
+		OHlog("Renamed vector inside init.", "New name:", name);
+		OHvector.import(vectorData, length);
+		OHlog("Initialized vector succesfully.");
+	}
+
 	void read() {
-		int vector_length;
-		std::cin >> vector_length;
-		vectorEl.rebuild(vector_length);
-		for (int i = 0; i < vectorEl.length; i++) {
-			std::cin >> vectorEl.data[i];
-		}
-		sLog("Read vector.");
-	}
-
-	void print() {
-		for (int i = 0; i < vectorEl.length; i++) {
-			std::cout << vectorEl.data[i] << ' ';
-		}
-		sLog("Printed vector");
-	}
-
-	void print_with_pos() {
-		std::cout << '\n';
-		for (int i = 0; i < vectorEl.length; i++) {
-			std::cout << i << ':' << vectorEl.data[i] << '\n';
-		}
-		sLog("Printed vector");
-	}
-
-	void rename(const char* name) {
-		vectorEl.rename(name);
-	}
-
-	void copy(const sArray& from, sArray& to) {
-		if (to.length < from.length) {
-			to.rebuild(from.length);
-		}
-		for (int i = 0; i < from.length; i++) {
-			to.data[i] = from.data[i];
-		}
-		sLog("Copied elements of two arrays.", from.vName, to.vName);
-	}
-
-	void append(int val) {
-		//temporarly create a t element, we copy them, bla bla and then log
-		sArray t;
-		t.rename("Append temporar vector");
-		copy(vectorEl, t);
-		vectorEl.rebuild(vectorEl.length + 1);
-		copy(t, vectorEl);
-		vectorEl.data[vectorEl.length - 1] = val;
-		char* temp = to_charS(val);//tis is the function which returns a pointer to the correctly transformed int into a char array, took too much to build
-		sLog("Appended element to vector. Appended element: ", temp);
-		delete[] temp;
-	}
-
-	void pop_at(int pos = -1, int sz = 1) {
-		if (pos > vectorEl.length - 1 || pos < 0)
-			pos = vectorEl.length - 1;
-		if (pos + sz > vectorEl.length)
+		OHlog("Attempting to read vector. Elements needed:", "Vector length", "Vector elements");
+		std::cin >> OHvector.length;
+		OHvector.rebuild(OHvector.length);
+		for (int i = 0; i < OHvector.length; i++)
 		{
-			throw std::out_of_range("pop range out of bounds");
-			return;
+			std::cin >> OHvector.data[i];
 		}
-		for (int i = pos; i < vectorEl.length - sz; i++) {
-			vectorEl.data[i] = vectorEl.data[i + sz];
-		}
-		vectorEl.length = vectorEl.length - sz;
-		sArray t;
-		copy(vectorEl, t);
-		vectorEl.rebuild(vectorEl.length);
-		copy(t, vectorEl);
+		OHlog("Finished reading the vecotr.");
 	}
 
-	void sLog(const char* msg, const char* optOne = "", const char* optTwo = "") {
-		if (!logging)
-			return;
+	void print(bool newLine = 0) {
+		for (int i = 0; i < OHvector.length; i++) {
+			std::cout << OHvector.data[i] << ' ';
+		}
+		if (newLine)
+			std::cout << '\n';
+		OHlog("Printed vector.");
+	}
 
-		std::ofstream log("log.txt", std::ios::app);
+	void sort(int from = 0, int to = 0, bool ascending = 1) {
+		if (to <= 0 || to > OHvector.length - 1) {
+			to = OHvector.length - 1;
+			OHlog("Modified 'to' term inside sort function due to out of bond memory attempt.");
+		}
+		if (from < 0 || from > to) {
+			from = 0;
+			OHlog("Modified 'from' term inside sort function due to out of bond memory attempt.");
+		}
+
+		quickSort(from, to, OHvector.data, ascending);
+		OHlog("Sorting completed.", "Order:", ascending ? "Ascending" : "Descending");
+	}
+
+	void insert_at(int value, int position = -1) {
+		if (position < 0 || position > OHvector.length)
+			position = OHvector.length;
+
+		OHvector.rebuild(OHvector.length + 1);
+
+		for (int i = OHvector.length - 1; i > position; --i) {
+			OHvector.data[i] = OHvector.data[i - 1];
+		}
+
+		OHvector.data[position] = value;
+
+		char* position_ = toCharArray(position);
+		char* value_ = toCharArray(value);
+		OHlog("insert_at executed - Position and value:", position_, value_);
+		delete[] position_;
+		delete[] value_;
+	}
+
+	void pop_at(int position = -1, size_t length = 1) {
+		if (OHvector.length == 0)
+			return;
+		if (position < 0 || position >= OHvector.length) {
+			position = OHvector.length - 1;
+		}
+		if (length > OHvector.length - position) {
+			length = OHvector.length - position;
+		}
+
+		for (int i = position; i < OHvector.length - length; i++) {
+			OHvector.data[i] = OHvector.data[i + length];
+		}
+
+		OHvector.length -= length;
+		OHvector.rebuild(OHvector.length);
+
+		char* posStr = toCharArray(position);
+		OHlog("pop_at executed", "Position:", posStr);
+		delete[] posStr;
+	}
+
+	void OHlog(const char* msg = nullptr, const char* msg2 = nullptr, const char* msg3 = nullptr) {
+		if (!logState)
+			return;
+		std::ofstream log("OHlog.txt", std::ios::app);
 		std::time_t timestamp = time(0);
 		tm* now = std::localtime(&timestamp);
 
-		log << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']'
-			<< " Element: " << (vectorEl.vName ? vectorEl.vName : "Unnamed")
-			<< "; " << msg << ' ' << (optOne ? optOne : "") << ' ' << (optTwo ? optTwo : "") << '\n';
+		log << "\n__ __ __\n" << '[' << std::put_time(now, "%Y-%m-%d %H:%M:%S") << ']' << '\n'
+			<< "Current vector: " << (OHvector.name ? OHvector.name : "Unnamed") << '\n'
+			<< (msg ? msg : " - ") << " | " << (msg2 ? msg2 : " - ") << " | " << (msg3 ? msg3 : " - ")
+			<< "\n__ __ __\n";
 	}
 
-	void getPositionOf(int n, vectorBySpinzi& out) {
-		for (int i = 0; i < vectorEl.length; i++) {
-			if (vectorEl.data[i] == n) {
-				out.append(i);
-			}
-		}
+	void OHsetLog(bool state) {
+		logState = state;
+		if (logState)
+			OHlog("LogState has been set to on.", "[OHManagerVector]", "Note: Use responsibly. Direct source code modification is discouraged.");
 	}
 
-	char* to_charS(int val) {
-		//this function is a pain
-		int leng = numbLength(val) + 1;//+1 for null terminator
-		int starting_position = 0;
-		bool neg = 0;
+	void OHprintLogState() {
+		std::cout << "Log state: " << logState << '\n';
+	}
 
-		size_t absVal;
+	int getIntLength(int a) {
+		if (a == 0) return 1;
+		a = abs(a);
+		int length = 0;
+		while (a) {
+			a /= 10;
+			length++;
+		}
+		return length;
+	}
 
-		if (val < 0) {
-			leng++;//incerement the size by one for the beggining -
-			starting_position = 1; //due to -
-			neg = true;
-			absVal = static_cast<size_t>(-(val + 1)) + 1;//special method, INT_MIN = -2147483648 INT_MAX = 2147483647 | If we would try to convert it would throw an error so we incerment it by one, it fits, we convert, and the it becomes unsigned int and it fits
-		}
-		else {
-			absVal = static_cast<size_t>(val);
-		}
-		char* f = new char[leng];//build the pointer with the memory needed
-		if (neg)
-			f[0] = '-';
-		f[leng - 1] = '\0';
-		for (int i = leng - 2; i >= starting_position; i--) {//converts numbers to chars
-			f[i] = numbToChar(absVal % 10);
+	char singleDigitIntToChar(int a) {
+		return '0' + (a % 10);
+	}
+
+	char* toCharArray(int val) {
+		OHlog("toCharArray", "Converting integer to char array",
+			"WARNING: Result must be manually deleted by the user if used outside - otherwise it will automatically be deleted by class");
+
+		int isNegative = val < 0;
+		int absVal = abs(val);
+		int length = getIntLength(val);
+		int totalLength = length + isNegative + 1; // +1 for null terminator
+
+		char* output = new char[totalLength];
+		output[totalLength - 1] = '\0';
+
+		if (isNegative)
+			output[0] = '-';
+
+		for (int i = totalLength - 2; i >= isNegative; i--) {
+			output[i] = singleDigitIntToChar(absVal % 10);
 			absVal /= 10;
 		}
-		return f;//returns the pointer, use with care
+
+		OHlog("toCharArray", "Char array constructed successfully", nullptr);
+		return output;
 	}
 
-	int numbLength(int n) {//returns the length of a numb
-		if (n == 0) return 1;
-		int l = 0;
-		while (n)
-		{
-			n /= 10;
-			l++;
-		}
-		return l;
-	}
-
-	void sort(int from = 0, int to = -1, bool direction = 0) {
-
-		if (to == -1) {
-			to = vectorEl.length - 1;
-		}
-
-		if (from < 0 || to > vectorEl.length) {
-			sLog("Error in attempting to call vector, values are out of bonds.");
-			return;
-		}
-
-		//0 for default, small to big, 1 for opposite
-		auto swap = [](int& a, int& b) {
-			int t = a;
-			a = b;
-			b = t;
-			};
-
-		//this partition separates a section of elements, what is higher that the pivot on the right and what is smaller on the left
-		auto partition = [&](int bottom, int top, int* v) {
-			int piv = v[top];
-			int i = bottom - 1;
-			for (int j = bottom; j < top; j++) {
-				if (direction ? (v[j] > piv) : (v[j] < piv)) {
-					swap(v[++i], v[j]);
-				}
-			}
-			swap(v[++i], v[top]);
-			return i;
-			};
-
-		//creating a function using std::function, allows us recursive calls inside lambada fn
-		std::function<void(int, int)> quickSort;
-
-		quickSort = [&](int bottom, int top) {
-			if (bottom < top) {
-				int piv = partition(bottom, top, vectorEl.data);
-
-				quickSort(bottom, piv - 1);
-				quickSort(piv + 1, top);
-			}
-			};
-
-		quickSort(from, to);
-	}
-
-	char numbToChar(int val) {//converts numb to char
-		return val + 48;
-	}
-
-	//log on or off, not much to say
-	void logOn() {
-		logging = true;
-	}
-
-	void logOff() {
-		logging = false;
-	}
-
-	int getMin() {
-		return vectorEl.getMin_val();
-	}
-
-	int getMax() {
-		return vectorEl.getMax_val();
-	}
-
-	void test_class() {
-		std::cout << "=====================================\n";
-		std::cout << "STARTING TESTING OF CLASS\n";
-		std::cout << "=====================================\n\n";
-
-		std::cout << "[PHASE 1] INPUT & READING:\n";
-		std::cout << "Please enter the values to read into the vector:\n";
-		read();
-
-		std::cout << "\n[INFO] Finished reading. The vector is:\n";
-		print();
-
-		std::cout << "\n[PHASE 2] SORTING:\n";
-
-		std::cout << "Sorting vector in ASCENDING order:\n";
-		sort(0, -1, false);
-		print();
-
-		std::cout << "\nSorting vector in DESCENDING order:\n";
-		sort(0, -1, true);
-		print();
-
-		std::cout << "\n[PHASE 3] APPENDING VALUES:\n";
-		std::cout << "Appending values: 65, 24, 62, 13, 52, 63...\n";
-
-		append(65);
-		append(24);
-		append(62);
-		append(13);
-		append(52);
-		append(63);
-
-		std::cout << "Updated vector with positions:\n";
-		print_with_pos();
-
-		std::cout << "\n[PHASE 4] REMOVING ELEMENTS AT SPECIFIC POSITIONS:\n";
-		std::cout << "Enter 3 positions to remove values from (one per line):\n";
-
-		for (int i = 0; i < 3; i++) {
-			int pos;
-			std::cin >> pos;
-			std::cout << "\nAttempting to remove element at position " << pos << "...\n";
-
-			try {
-				pop_at(pos);
-				std::cout << "[SUCCESS] Removed. Current vector:\n";
-				print_with_pos();
-			}
-			catch (std::out_of_range& e) {
-				std::cout << "[ERROR] Exception caught: " << e.what() << '\n';
+	char* vectorToCharArray(int* data, int length) {
+		int totalSize = 0;
+		for (int i = 0; i < length; i++) {
+			int digits = getIntLength(data[i]);
+			if (data[i] < 0)digits++;
+			totalSize += digits;
+			if (i != length - 1) {
+				totalSize += 2;//accounting for "; "
 			}
 		}
+		totalSize += 1; //null terminator
 
-		std::cout << "\n[INFO] Final vector after deletions:\n";
-		print_with_pos();
+		char* output = new char[totalSize];
+		int pos = 0;
+		for (int i = 0; i < length; i++) {
+			char* num = toCharArray(data[i]);
+			for (int j = 0; num[j]; j++) {//null terminated, will end at \0
+				output[pos++] = num[j];//adding what is in num to the output
+			}
+			delete[] num;//we clean after ourselves
+			if (i != length - 1) {//adding "; " after each iteration
+				output[pos++] = ';';
+				output[pos++] = ' ';
+			}
+		}
+		output[pos] = '\0';
+		return output;
+	}
 
-		std::cout << "\n[PHASE 5] PARTIAL SORT:\n";
-		std::cout << "Sorting vector from 2nd to last element (ASCENDING)...\n";
-		sort(1, -1, false);
+	void OHdebugVectorState() {
+		char* lengthStr = toCharArray(OHvector.length);
+		char* dataStr = vectorToCharArray(OHvector.data, OHvector.length);
 
-		std::cout << "Vector after partial sort:\n";
-		print();
+		OHlog("Vector State Debug",
+			(std::string("Length: ") + lengthStr).c_str(),
+			(std::string("Data: ") + dataStr).c_str());
 
-		std::cout << "\n[PHASE 6] MIN, MAX, AND POSITION TESTING:\n";
-
-		// Print current vector
-		std::cout << "Current vector:\n";
-		print_with_pos();
-
-		// Get and print min and max
-		int minVal = getMin();
-		int maxVal = getMax();
-
-		std::cout << "\nMinimum value in vector: " << minVal << '\n';
-		std::cout << "Maximum value in vector: " << maxVal << '\n';
-
-		// Ask for a value to find positions of
-		std::cout << "\nEnter a value to find all positions of:\n";
-		int targetVal;
-		std::cin >> targetVal;
-
-		vectorBySpinzi positions;
-		positions.rename("Positions");
-		getPositionOf(targetVal, positions);
-
-		std::cout << "Positions of value " << targetVal << " in vector:\n";
-		positions.print();
-
-		std::cout << "\n=====================================\n";
-		std::cout << "TEST COMPLETE.\n";
-		std::cout << "=====================================\n";
+		delete[] lengthStr;
+		delete[] dataStr;
 	}
 };
 
-//this is just for texting purposes, will be removed in fila product
 int main() {
-	vectorBySpinzi el;
-	el.logOn();
-	el.rename("Custom");
-	el.test_class();
+	OHManagerVector e(true);
+	e.read();
+	e.sort();
+	e.print();
+	int postToAdd, value;
+	std::cin >> postToAdd >> value;
+	e.insert_at(value, postToAdd);
+	e.print();
+	e.OHdebugVectorState();
 }
